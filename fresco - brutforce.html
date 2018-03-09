@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
+<body>
+
+<div ng-app="myapp" >
+
+<p>URL: <input type="text" ng-model="url1"></p>
+<p>You wrote: {{ url1 }}</p>
+
+<p>token: <input type="text" ng-model="token"></p>
+
+<p>EnrollmentId: <input type="text" ng-model="enrollment_id"></p>
+
+<p>content_id: <input type="text" ng-model="content_id"></p>
+
+<div ng-controller="MyController" >
+    <button ng-click="myData.doClick(item, $event)">Send AJAX Request</button>
+    <br/>
+    Data from server: {{myData.fromServer}}
+	<br/>
+	<br/>
+	<br/>
+	{{ ans_pre }}
+  </div>
+
+</div>
+
+ <script>
+    angular.module("myapp", [])
+        .controller("MyController", function($scope, $http) {
+            $scope.myData = {};
+			$scope.token = 'UpqI0fICbj9HOm5gvi_GRdJaHN4E3kIHIMtAF11hBTg';
+			$scope.enrollment_id = 912203;
+			var latest_response;
+            $scope.myData.doClick = function(item, event) {
+			$scope.url = 'https://play-api.fresco.me/api/v1/assessments/get_quiz_details.json?id='+$scope.content_id;
+                var responsePromise = $http.get($scope.url, {
+					headers: {
+						"X-Api-Key": $scope.token
+					}}).then(function mySuccess(response) {
+      $scope.myData.fromServer = response.data;
+	  
+	  $scope.ans_pre = {"data":
+		{"enrollment_id":912203,"content_id":41,
+		"sections":[{"section_id":15,"questions":[{"question_id":73,"answer_ids":[279]},{"question_id":74,"answer_ids":[282]}]}]}}
+	  
+	  var pre_data = {"data":"{\"enrollment_id\":774234,\"content_id\":35,\"sections\":[{\"section_id\":13,\"questions\":[{\"question_id\":69,\"answer_ids\":[261]},{\"question_id\":68,\"answer_ids\":[257]},{\"question_id\":67,\"answer_ids\":[254]}]}]}"};
+	  //$scope.ans_pre.data.sections[0].section_id = $scope.myData.assessment.sections[0].id ;
+	  
+	  console.log(response.data);
+	  
+	  console.log(JSON.parse(pre_data.data));
+	  
+	  pre_data=JSON.parse(pre_data.data);
+	  pre_data.sections[0].section_id = $scope.myData.fromServer.assessment.sections[0].id ;
+	  pre_data.enrollment_id = $scope.enrollment_id;
+	  pre_data.content_id = $scope.content_id;
+	  
+	  var array = response.data.assessment.sections[0].questions;
+	  var questions = [];
+	  
+	  
+	  for(var j =0 ;j<20;j++){
+			questions = [];
+			for(var i=0;i<array.length;i++){
+			//console.log(Math.floor(Math.random() * (array[i].answers.length - 0 + 1)) + 0);
+					var temp = {"question_id":array[i].id, "answer_ids":[array[i].answers[Math.floor(Math.random() * (array[i].answers.length ))].id]}
+					questions.push(temp);
+			
+			}
+			pre_data.sections[0].questions = questions;
+			$http.post('https://play-api.fresco.me/api/v1/assessments/post_result.json',{"data":JSON.stringify(pre_data)},{
+					headers: {
+						"X-Api-Key": $scope.token
+					}}).then(function mySuccess(response) {
+							if(response.data.assessment.result == "PASS"){
+								console.log("PASS");
+								$scope.myData.fromServer = 'PASS';
+							}
+							
+					
+					});
+			
+	  }
+		});
+
+            }
+
+
+        } );
+  </script>
+
+</body>
+</html>
